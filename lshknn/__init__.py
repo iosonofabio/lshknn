@@ -85,7 +85,7 @@ class Lshknn:
 
         # TODO: make the graph??
 
-        return knn
+        return knn, similarity
 
     def __call__(self):
         self.check_input()
