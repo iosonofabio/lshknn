@@ -1,7 +1,8 @@
 #!/bin/bash
 if [ $TRAVIS_OS_NAME == 'linux' ]; then
   echo "Installing deps for linux"
-  echo "FIXME: pybind11 comes here!"
+  sudo apt-get -qq update
+  sudo apt-get install -y eigen3 pkg-config
 elif [ $TRAVIS_OS_NAME == 'osx' ]; then
   echo "Installing deps for OSX"
   if [ $PYTHON_VERSION == "2.7" ]; then
@@ -19,7 +20,7 @@ elif [ $TRAVIS_OS_NAME == 'osx' ]; then
   # Use pip from conda
   conda install -y pip
   pip --version
-  echo "FIXME: pybind11 comes here!"
+  echo "FIXME: eigen3 and pkg-config come here!"
 else
   echo "OS not recognized: $TRAVIS_OS_NAME"
   exit 1

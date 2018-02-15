@@ -5,6 +5,7 @@ import os
 import setuptools
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+import pkgconfig
 
 if ((sys.version_info[0] == 2 and sys.version_info[1] < 7) or
    (sys.version_info[0] == 3 and sys.version_info[1] < 4)):
@@ -19,6 +20,7 @@ kwargs = dict(
     setup_requires=[
         'pybind11>=2.2',
         'numpy',
+        'pkgconfig',
     ],
     install_requires=[
         'numpy',
@@ -142,8 +144,8 @@ Development: https://github.com/iosonofabio/lshknn
              include_dirs=[
                  numpy_include_dir,
                  get_pybind_include(),
-                 get_pybind_include(user=True),
-                 ],
+                 get_pybind_include(user=True)] +
+                 pkgconfig.parse("eigen3")["include_dirs"],
              language='c++',
              ),
       ],
