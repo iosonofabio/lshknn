@@ -2,7 +2,8 @@
 if [ $TRAVIS_OS_NAME == 'linux' ]; then
   echo "Installing deps for linux"
   sudo apt-get -qq update
-  sudo apt-get install -y eigen3 pkg-config
+  sudo apt-get install -y cmake pkg-config
+  ./travis_install_eigen3.sh
 elif [ $TRAVIS_OS_NAME == 'osx' ]; then
   echo "Installing deps for OSX"
   if [ $PYTHON_VERSION == "2.7" ]; then
