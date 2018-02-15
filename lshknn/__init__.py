@@ -8,17 +8,13 @@ class Lshknn:
     def __init__(
             self,
             data,
-            graph_k=20,
             similarity_k=20,
-            graph_threshold=0.5,
             similarity_threshold=0.2,
             m=100,
             ):
 
         self.data = data
-        self.graph_k = graph_k
         self.similarity_k = similarity_k
-        self.graph_threshold = graph_threshold
         self.similarity_threshold = similarity_threshold
         self.m = m
         self.n = data.shape[1]
@@ -83,8 +79,6 @@ class Lshknn:
                 self.similarity_k,
                 self.similarity_threshold,
                 )
-
-        # TODO: make the graph??
 
         return knn, similarity, n_neighbors
 
