@@ -8,24 +8,32 @@ class Lshknn:
     def __init__(
             self,
             data,
-            k=20,
-            threshold=0.5,
+            graph_k=20,
+            similarity_k=20,
+            graph_threshold=0.5,
+            similarity_threshold=0.2,
             m=100,
             ):
 
         self.data = data
-        self.k = k
-        self.threshold = threshold
+        self.graph_k = graph_k
+        self.similarity_k = similarity_k
+        self.graph_threshold = graph_threshold
+        self.similarity_threshold = similarity_threshold
         self.m = m
         self.n = data.shape[1]
 
     def _check_input(self):
         if self.m < 1:
             raise ValueError('m should be 1 or more')
-        if self.k < 1:
-            raise ValueError('k should be 1 or more')
-        if (self.threshold < 0) or (self.threshold > 1):
-            raise ValueError('threshold should be between 0 and 1')
+        if self.graph_k < 1:
+            raise ValueError('graph_k should be 1 or more')
+        if self.similarity_k < 1:
+            raise ValueError('similarity_k should be 1 or more')
+        if (self.graph_threshold < 0) or (self.graph_threshold > 1):
+            raise ValueError('graph_threshold should be between 0 and 1')
+        if (self.similarity_threshold < 0) or (self.similarity_threshold > 1):
+            raise ValueError('similarity_threshold should be between 0 and 1')
         if np.min(self.data.shape) < 2:
             raise ValueError('data should be at least 2x2 in shape')
 
@@ -63,14 +71,19 @@ class Lshknn:
             raise AttributeError('Compute signature first!')
 
         # NOTE: I allocate the output array in Python for ownership purposes
-        knn = np.zeros((self.n, self.k), dtype=np.uint64)
+        knn = np.zeros((self.n, self.similarity_k), dtype=np.uint64)
+        similarity = np.zeros((self.n, self.similarity_k), dtype=np.float64)
         knn_from_signature(
                 self.signature,
                 knn,
+                similarity,
                 self.n,
                 self.m,
-                self.k,
+                self.similarity_k,
+                self.similarity_threshold,
                 )
+
+        # TODO: make the graph??
 
         return knn
 

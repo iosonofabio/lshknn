@@ -9,8 +9,10 @@ data = np.array(
 
 c = lshknn.Lshknn(
         data=data,
-        k=1,
-        threshold=0.5,
+        graph_k=1,
+        similarity_k=1,
+        graph_threshold=0.5,
+        simlarity_threshold=0.2,
         m=10,
         )
 

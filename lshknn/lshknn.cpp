@@ -5,7 +5,12 @@ namespace py = pybind11;
 
 using MatrixXdR = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
-int knn_from_signature(py::EigenDRef<Eigen::MatrixXd> signature, py::EigenDRef<Eigen::MatrixXd> knn, int n, int m, int k) {
+int knn_from_signature(
+		py::EigenDRef<Eigen::MatrixXd> signature,
+		py::EigenDRef<Eigen::MatrixXd> knn,
+		py::EigenDRef<Eigen::MatrixXd> similarity,
+		int n, int m, int k, threshold) {
+
 	// signature is a vector containing 64 bit integers for all n cells, the number of integers for each cell is
 	// b = (1 + ((m - 1) div 64))
 	// so we can parse 0 to (b - 1) for cell 1, b to (2b - 1) for cell 2, etc.
