@@ -1,2 +1,6 @@
 #!/bin/bash
-echo "Mock test"
+set -euo pipefail
+IFS=$'\n\t'
+
+echo "Test lshknn"
+python test/test_small.py

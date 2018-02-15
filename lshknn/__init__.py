@@ -18,6 +18,11 @@ class Lshknn:
         self.threshold = threshold
         self.m = m
 
+    def _normalize_data(self):
+        # Substract average across genes for each cell
+        # FIXME: preserve sparsity?!
+        self.data -= self.data.mean(axis=0)
+
     def _generate_planes(self):
         self.planes = np.random.normal(
                 loc=0,
@@ -29,7 +34,10 @@ class Lshknn:
         if not hasattr(self, 'planes'):
             raise AttributeError('Generate planes first!')
 
-        self.signature = np.dot(self.data.T, self.planes) > 0
+        signature = np.dot(self.data.T, self.planes) > 0
+
+        # TODO: Convert to memory blocks
+        self.signature = signature
 
 
     def _knnlsh(self):
@@ -46,6 +54,7 @@ class Lshknn:
         return knn
 
     def __call__(self):
+        self._normalize_data()
         self._generate_planes()
         self._compute_signature()
         return self._knnlsh()
