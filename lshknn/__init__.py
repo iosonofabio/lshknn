@@ -73,11 +73,12 @@ class Lshknn:
         # NOTE: I allocate the output array in Python for ownership purposes
         knn = np.zeros((self.n, self.similarity_k), dtype=np.uint64)
         similarity = np.zeros((self.n, self.similarity_k), dtype=np.float64)
+        n_neighbors = np.zeros(self.n, dtype=np.uint64)
         knn_from_signature(
                 self.signature,
                 knn,
                 similarity,
-                self.n,
+                n_neighbors,
                 self.m,
                 self.similarity_k,
                 self.similarity_threshold,
@@ -85,7 +86,7 @@ class Lshknn:
 
         # TODO: make the graph??
 
-        return knn, similarity
+        return knn, similarity, n_neighbors
 
     def __call__(self):
         self.check_input()

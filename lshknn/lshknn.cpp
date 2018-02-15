@@ -9,6 +9,7 @@ int knn_from_signature(
 		py::EigenDRef<Eigen::MatrixXd> signature,
 		py::EigenDRef<Eigen::MatrixXd> knn,
 		py::EigenDRef<Eigen::MatrixXd> similarity,
+		py::EigenDRef<Eigen::MatrixXd> n_neighbors,
 		int n, int m, int k, threshold) {
 
 	// signature is a vector containing 64 bit integers for all n cells, the number of integers for each cell is

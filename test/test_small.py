@@ -16,5 +16,5 @@ c = lshknn.Lshknn(
         m=10,
         )
 
-knn, similarity = c()
+knn, similarity, n_neighbors = c()
 assert (knn == [[2], [3], [0], [2]])
