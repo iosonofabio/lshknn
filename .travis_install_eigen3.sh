@@ -10,4 +10,4 @@ cd eigen-eigen-07105f7124f9
 mkdir build
 cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-make install
+sudo make install
