@@ -82,10 +82,10 @@ void computeSimilarityTable(
 // Python Interface
 ///////////////////////////////////////////////////////////
 void knn_from_signature(
-    py::EigenDRef<Eigen::MatrixXd> signature,
-    py::EigenDRef<Eigen::MatrixXd> knn,
-    py::EigenDRef<Eigen::MatrixXd> similarity,
-    py::EigenDRef<Eigen::MatrixXd> n_neighbors,
+    py::EigenDRef<const Eigen::Matrix<uint64_t, -1, -1> > signature,
+    py::EigenDRef<Eigen::Matrix<uint64_t, -1, -1> > knn,
+    py::EigenDRef<Eigen::Matrix<double, -1, -1> > similarity,
+    py::EigenDRef<Eigen::Matrix<uint64_t, -1, -1> > n_neighbors,
     const int n,
     const int m,
     const int k,
@@ -103,12 +103,12 @@ void knn_from_signature(
     // We gotta wrap chunks of signature as non-memory-owning BitSetPointer to keep some resemblance to Paolo's
     // original API
     //TODO
-    for(int i=0; i < n; i++) {
-        if (i == 0)
-    	    knn(i, 0) = 4;
-        else
-    	    knn(i, 0) = 0;
-    }
+    //for(int i=0; i < n; i++) {
+    //    if (i == 0)
+    //	    knn(i, 0) = 4;
+    //    else
+    //	    knn(i, 0) = 0;
+    //}
     // end TODO
 	
 }

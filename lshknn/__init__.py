@@ -48,15 +48,15 @@ class Lshknn:
         signature = np.dot(self.data.T, self.planes) > 0
 
         # TODO: Convert to memory blocks (64 bits)
-        n_ints = (self.m - 1) // 64
+        word_count = 1 + (self.m - 1) // 64
         base = 2**np.arange(64).astype(np.uint64)
         ints = []
         for row in signature:
-            for i in range(n_ints):
-                sig = signature[i * 64: (i+1) * 64]
+            for i in range(word_count):
+                sig = row[i * 64: (i+1) * 64]
                 ints.append(np.dot(sig, base[:len(sig)]))
 
-        self.signature = np.array(ints, np.uint64)
+        self.signature = np.array([ints], np.uint64)
 
     def _knnlsh(self):
         if not hasattr(self, 'planes'):
@@ -65,12 +65,13 @@ class Lshknn:
         # NOTE: I allocate the output array in Python for ownership purposes
         knn = np.zeros((self.n, self.similarity_k), dtype=np.uint64)
         similarity = np.zeros((self.n, self.similarity_k), dtype=np.float64)
-        n_neighbors = np.zeros(self.n, dtype=np.uint64)
+        n_neighbors = np.zeros((self.n, 1), dtype=np.uint64)
         knn_from_signature(
                 self.signature,
                 knn,
                 similarity,
                 n_neighbors,
+                self.n,
                 self.m,
                 self.similarity_k,
                 self.similarity_threshold,
