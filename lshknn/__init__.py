@@ -56,7 +56,7 @@ class Lshknn:
                 sig = signature[i * 64: (i+1) * 64]
                 ints.append(np.dot(sig, base[:len(sig)]))
 
-        self.signature = np.concatenate(ints)
+        self.signature = np.array(ints, np.uint64)
 
     def _knnlsh(self):
         if not hasattr(self, 'planes'):
