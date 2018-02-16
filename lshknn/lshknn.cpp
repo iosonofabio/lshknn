@@ -28,7 +28,7 @@ public:
 
 // Count the number of mismatching bits between two bit vectors.
 // Use SSE 4.2 builtin instruction popcount
-uint64_t countMismatches(
+inline uint64_t countMismatches(
     const BitSetPointer& x,
     const BitSetPointer& y)
 {
