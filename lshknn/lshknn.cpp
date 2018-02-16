@@ -23,12 +23,12 @@ public:
     // Return the number of 64-bit words in the bit set.
     uint64_t wordCount() const { return end - begin; }
 
-}
+};
 
 
 // Count the number of mismatching bits between two bit vectors.
 // Use SSE 4.2 builtin instruction popcount
-inline uint64_t countMismatches(
+uint64_t countMismatches(
     const BitSetPointer& x,
     const BitSetPointer& y)
 {
