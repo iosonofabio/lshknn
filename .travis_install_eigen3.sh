@@ -1,6 +1,4 @@
 #!/usr/bin/env sh
-# Installs eigen to $HOME/local
-
 set -ex
 
 wget http://bitbucket.org/eigen/eigen/get/3.2.8.tar.gz
