@@ -83,7 +83,7 @@ class Lshknn:
         return knn, similarity, n_neighbors
 
     def __call__(self):
-        self.check_input()
+        self._check_input()
         self._normalize_data()
         self._generate_planes()
         self._compute_signature()
