@@ -1,3 +1,4 @@
+#include <map>
 #include <cmath>
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
@@ -78,6 +79,63 @@ void computeSimilarityTable(
 
 }
 
+Eigen::MatrixXd computeHashSlices(
+    py::EigenDRef<const Eigen::Matrix<uint64_t, -1, -1> > signature,
+    const int n,
+    const int q,
+    const int g,
+    const size_t wordCount,
+    Eigen::Matrix<uint64_t, Dynamic, 1>& knn_tmp,
+    Eigen::Matrix<double, Dynamic, 1>& sim_tmp,
+    std::vector<double>& similarityTable,
+    ) {
+
+    // Hash map
+    std::map<BitSetPointer, std::vector<uint64_t> > signatureMap;
+
+    // Iterate over slices
+    for (int gi=0; gi < g; gi++) {
+        // Clear signatureMap
+        signatureMap.clear();
+
+        // Iterate over cells
+	for (uint64_t cell=0; cell < n; cell++) {
+            BitSetPointer bp(
+                begin=signature.data() + cell * wordCount + gi * q,
+		wordCount=q);
+	    signatureMap[bp].push_back(cell);
+        }
+
+	// Now we have the first sliced signatures
+	// Let's add neighbor candidates
+        for (std::map<BitSetPointer, std::vector<uint64_t> >::iterator it=signatureMap.begin();
+             it!=mymap.end();
+             it++) {
+             // Calculate all pairwise distances within group
+	     int ng = it->second.size();
+	     MatrixXdR similarityHashGroup(ng, ng);
+	     for (std::vector<int>::iterator vit = it->second.begin(), int cell1=0; vit != it->second.end(); vit++, cell1++) {
+                 for (std::vector<int>::iterator vit2 = it->second.begin(), int cell2=0; vit2 != it->second.end(); vit2++, cell2++) {
+                     similarityHashGroup(cell1, cell2) = computeCellSimilarity(
+				     BitSetPointer(begin=signature.data() + (*vit1) * wordCount, wordCount=wordCount),
+				     BitSetPointer(begin=signature.data() + (*vit2) * wordCount, wordCount=wordCount),
+				     )
+	          }
+	     }
+             
+	     // Sort rows and take top 20
+    }
+
+
+    for(CellId cellId=0; cellId<cellCount; cellId++) {
+        signatureMap[lsh.getSignature(cellId)].push_back(cellId);
+}
+    for(int i=0; i < n; i++) {
+    
+    }
+
+}
+
 ///////////////////////////////////////////////////////////
 // Python Interface
 ///////////////////////////////////////////////////////////
@@ -92,24 +150,29 @@ void knn_from_signature(
     const double threshold) {
 
     // signature is a vector containing 64 bit integers for all n cells, the number of 64bit for each cell is
-    // so we can parse 0 to (b - 1) for cell 1, b to (2b - 1) for cell 2, etc.
     size_t wordCount = 1 + ((m - 1) / 64);
+    // so we can parse 0 to (wordCount - 1) for cell 1, wordCount to (2 * wordCount - 1) for cell 2, etc.
 
     // Compute the similarity table with m bits
     std::vector<double> similarityTable;
     computeSimilarityTable((size_t)m, similarityTable);
     
-    //TODO: write the actual code!
-    // We gotta wrap chunks of signature as non-memory-owning BitSetPointer to keep some resemblance to Paolo's
-    // original API
-    //TODO
-    //for(int i=0; i < n; i++) {
-    //    if (i == 0)
-    //	    knn(i, 0) = 4;
-    //    else
-    //	    knn(i, 0) = 0;
-    //}
-    // end TODO
+    // 1. Create g bit subgroups with q 64-bit words each
+    //    Up to 2^q hashes per group
+    int q = 1;
+    int g = 1 + (m - 1) / q;
+    Eigen::Matrix<uint64_t, Dynamic, 1> knn_tmp(n, q * g);
+    Eigen::Matrix<double, Dynamic, 1> sim_tmp(n, q * g);
+    Eigen::MatrixXd knn_tmp = computeHashSlices(
+        signature,
+	n, q, g, wordCount,
+	knn_tmp,
+	sim_tmp,
+	similarityTable);
+    // 2. For each subgroup, hash cells
+    // 3.     For each cell, find k neighbors in the same hash group
+    // 4. Sort cell neighbours from all subgroups and take first k
+    // 5. Format for returning
 	
 }
 
