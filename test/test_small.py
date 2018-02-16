@@ -10,7 +10,7 @@ data = np.array(
 c = lshknn.Lshknn(
         data=data,
         similarity_k=1,
-        simlarity_threshold=0.2,
+        similarity_threshold=0.2,
         m=10,
         )
 

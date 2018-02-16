@@ -25,7 +25,6 @@ public:
 
 };
 
-
 // Count the number of mismatching bits between two bit vectors.
 // Use SSE 4.2 builtin instruction popcount
 inline uint64_t countMismatches(
