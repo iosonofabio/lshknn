@@ -22,12 +22,8 @@ class Lshknn:
     def _check_input(self):
         if self.m < 1:
             raise ValueError('m should be 1 or more')
-        if self.graph_k < 1:
-            raise ValueError('graph_k should be 1 or more')
         if self.similarity_k < 1:
             raise ValueError('similarity_k should be 1 or more')
-        if (self.graph_threshold < 0) or (self.graph_threshold > 1):
-            raise ValueError('graph_threshold should be between 0 and 1')
         if (self.similarity_threshold < 0) or (self.similarity_threshold > 1):
             raise ValueError('similarity_threshold should be between 0 and 1')
         if np.min(self.data.shape) < 2:
