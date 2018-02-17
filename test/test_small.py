@@ -15,4 +15,4 @@ c = lshknn.Lshknn(
         )
 
 knn, similarity, n_neighbors = c()
-assert (knn == [[2], [3], [0], [2]]).all()
+assert (knn == [[2], [3], [0], [1]]).all()

@@ -1,3 +1,4 @@
+//#include <iostream>
 #include <map>
 #include <cmath>
 #include <pybind11/pybind11.h>
@@ -14,12 +15,12 @@ class BitSetPointer {
 public:
 
     // Begin and and pointers of the bit set.
-    uint64_t* begin;
-    uint64_t* end;
+    const uint64_t* begin;
+    const uint64_t* end;
 
     // Constructors.
-    BitSetPointer(uint64_t* begin=0, uint64_t* end=0) : begin(begin), end(end) {}
-    BitSetPointer(uint64_t* begin, uint64_t wordCount) : begin(begin), end(begin+wordCount) {}
+    BitSetPointer(const uint64_t* begin=0, const uint64_t* end=0) : begin(begin), end(end) {}
+    BitSetPointer(const uint64_t* begin, uint64_t wordCount) : begin(begin), end(begin+wordCount) {}
 
     // Return the number of 64-bit words in the bit set.
     uint64_t wordCount() const { return end - begin; }
@@ -79,6 +80,65 @@ void computeSimilarityTable(
 
 }
 
+struct SimilarCell {
+    double similarity;
+    uint64_t cell;
+};
+
+bool compareSimilarCells(SimilarCell i, SimilarCell j) { return (i.similarity > j.similarity); }
+
+void computeNeighborsViaAllPairs(
+    py::EigenDRef<const Eigen::Matrix<uint64_t, -1, -1> > signature,
+    py::EigenDRef<Eigen::Matrix<uint64_t, -1, -1> > knn,
+    py::EigenDRef<Eigen::Matrix<double, -1, -1> > similarity,
+    const int n,
+    const int k,
+    const size_t wordCount,
+    std::vector<double>& similarityTable,
+    const double threshold) {
+
+    std::vector<SimilarCell> candidates(n);
+    for (uint64_t cell1=0; cell1 < (uint64_t)n; cell1++) {
+
+	// Calculate all similarities with this cell
+        for (uint64_t cell2=0; cell2 < (uint64_t)n; cell2++) {
+		BitSetPointer bp1(signature.data() + cell1 * wordCount, wordCount);
+		BitSetPointer bp2(signature.data() + cell2 * wordCount, wordCount);
+		double sim = computeCellSimilarity(bp1, bp2, similarityTable);
+		candidates[cell2] = { sim, cell2 };
+
+		//std::cout << "cell1: " << cell1 << ", cell2: " << cell2 << ", sim: " << sim << "\n";
+        }
+	candidates[cell1] = { -1, cell1};
+
+	// Sort cells by similarities
+	std::sort(candidates.begin(), candidates.end(), compareSimilarCells);
+
+	/*
+	std::cout << "cell1 neighbors sorted for cell " << cell1 << ":\n";
+        for (std::vector<SimilarCell>::iterator it=candidates.begin();
+	     it != candidates.end(); it++) {
+		std::cout << (it->cell);
+	}
+	std::cout << "\n";
+        */
+
+	// Fill output matrix
+	for(uint64_t neigh=0; neigh < (uint64_t)k; neigh++) {
+	    if(candidates[neigh].similarity >= threshold) {
+	        knn(cell1, neigh) = candidates[neigh].cell;
+	        similarity(cell1, neigh) = candidates[neigh].similarity;
+	    } else {
+		// n is above the max, so it is used as nans
+	        knn(cell1, neigh) = n;
+	        similarity(cell1, neigh) = 0;
+	    }
+	}
+    }
+
+}
+
+/*
 Eigen::MatrixXd computeHashSlices(
     py::EigenDRef<const Eigen::Matrix<uint64_t, -1, -1> > signature,
     const int n,
@@ -135,6 +195,7 @@ Eigen::MatrixXd computeHashSlices(
     }
 
 }
+*/
 
 ///////////////////////////////////////////////////////////
 // Python Interface
@@ -156,23 +217,31 @@ void knn_from_signature(
     // Compute the similarity table with m bits
     std::vector<double> similarityTable;
     computeSimilarityTable((size_t)m, similarityTable);
+
+    // Slower version, go through n^2 pairs
+    computeNeighborsViaAllPairs(
+	signature, knn, similarity,
+	n, k, wordCount,
+	similarityTable,
+	threshold);
     
-    // 1. Create g bit subgroups with q 64-bit words each
-    //    Up to 2^q hashes per group
-    int q = 1;
-    int g = 1 + (m - 1) / q;
-    Eigen::Matrix<uint64_t, Dynamic, 1> knn_tmp(n, q * g);
-    Eigen::Matrix<double, Dynamic, 1> sim_tmp(n, q * g);
-    Eigen::MatrixXd knn_tmp = computeHashSlices(
-        signature,
-	n, q, g, wordCount,
-	knn_tmp,
-	sim_tmp,
-	similarityTable);
-    // 2. For each subgroup, hash cells
-    // 3.     For each cell, find k neighbors in the same hash group
-    // 4. Sort cell neighbours from all subgroups and take first k
-    // 5. Format for returning
+    // Faster version
+    //// 1. Create g bit subgroups with q 64-bit words each
+    ////    Up to 2^q hashes per group
+    //int q = 1;
+    //int g = 1 + (m - 1) / q;
+    //Eigen::Matrix<uint64_t, Dynamic, 1> knn_tmp(n, q * g);
+    //Eigen::Matrix<double, Dynamic, 1> sim_tmp(n, q * g);
+    //Eigen::MatrixXd knn_tmp = computeHashSlices(
+    //    signature,
+    //    n, q, g, wordCount,
+    //    knn_tmp,
+    //    sim_tmp,
+    //    similarityTable);
+    //// 2. For each subgroup, hash cells
+    //// 3.     For each cell, find k neighbors in the same hash group
+    //// 4. Sort cell neighbours from all subgroups and take first k
+    //// 5. Format for returning
 	
 }
 
