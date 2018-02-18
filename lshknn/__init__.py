@@ -93,7 +93,7 @@ a neighbor.
 
         self.signature = np.array([ints], np.uint64)
 
-    def _knnlsh(self):
+    def _knnlsh(self, use_slices=False):
         if not hasattr(self, 'planes'):
             raise AttributeError('Compute signature first!')
 
@@ -110,6 +110,7 @@ a neighbor.
                 self.m,
                 self.k,
                 self.threshold,
+                use_slices,
                 )
 
     def _format_output(self):
@@ -140,10 +141,10 @@ a neighbor.
 
         return self.knn, self.similarity, self.n_neighbors
 
-    def __call__(self):
+    def __call__(self, use_slices=False):
         self._check_input()
         self._normalize_data()
         self._generate_planes()
         self._compute_signature()
-        self._knnlsh()
+        self._knnlsh(use_slices=use_slices)
         return self._format_output()
