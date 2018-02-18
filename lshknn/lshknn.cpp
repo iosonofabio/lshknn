@@ -8,6 +8,15 @@ namespace py = pybind11;
 
 using MatrixXdR = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
+// Struct for Sorting cells by similarity
+struct SimilarCell {
+    double similarity;
+    uint64_t cell;
+};
+
+// Compare function to  sort SimilarCells
+bool compareSimilarCells(SimilarCell i, SimilarCell j) { return (i.similarity > j.similarity); }
+
 // Class that stores pointers to the begin and end of a bit set.
 // Does not own the memory, and copies are shallow copies.
 // Implements low level operations on bit sets.
@@ -66,7 +75,7 @@ void computeSimilarityTable(
     // Loop over all possible numbers of mismatching bits.
     for(size_t mismatchingBitCount = 0;
         mismatchingBitCount <= lshCount;
-	mismatchingBitCount++) {
+    mismatchingBitCount++) {
 
         // Compute the angle between the vectors corresponding to
         // this number of mismatching bits.
@@ -80,13 +89,8 @@ void computeSimilarityTable(
 
 }
 
-struct SimilarCell {
-    double similarity;
-    uint64_t cell;
-};
-
-bool compareSimilarCells(SimilarCell i, SimilarCell j) { return (i.similarity > j.similarity); }
-
+// Compute k nearest neighbors and similarity values naively, i.e.
+// iterating over all pairs
 void computeNeighborsViaAllPairs(
     py::EigenDRef<const Eigen::Matrix<uint64_t, -1, -1> > signature,
     py::EigenDRef<Eigen::Matrix<uint64_t, -1, -1> > knn,
@@ -100,40 +104,76 @@ void computeNeighborsViaAllPairs(
     std::vector<SimilarCell> candidates(n);
     for (uint64_t cell1=0; cell1 < (uint64_t)n; cell1++) {
 
-	// Calculate all similarities with this cell
+    // Calculate all similarities with this cell
         for (uint64_t cell2=0; cell2 < (uint64_t)n; cell2++) {
-		BitSetPointer bp1(signature.data() + cell1 * wordCount, wordCount);
-		BitSetPointer bp2(signature.data() + cell2 * wordCount, wordCount);
-		double sim = computeCellSimilarity(bp1, bp2, similarityTable);
-		candidates[cell2] = { sim, cell2 };
+        BitSetPointer bp1(signature.data() + cell1 * wordCount, wordCount);
+        BitSetPointer bp2(signature.data() + cell2 * wordCount, wordCount);
+        double sim = computeCellSimilarity(bp1, bp2, similarityTable);
+        candidates[cell2] = { sim, cell2 };
 
-		//std::cout << "cell1: " << cell1 << ", cell2: " << cell2 << ", sim: " << sim << "\n";
+        //std::cout << "cell1: " << cell1 << ", cell2: " << cell2 << ", sim: " << sim << "\n";
         }
-	candidates[cell1] = { -1, cell1};
+    candidates[cell1] = { -1, cell1};
 
-	// Sort cells by similarities
-	std::sort(candidates.begin(), candidates.end(), compareSimilarCells);
+    // Sort cells by similarities
+    std::sort(candidates.begin(), candidates.end(), compareSimilarCells);
 
-	/*
-	std::cout << "cell1 neighbors sorted for cell " << cell1 << ":\n";
+    /*
+    std::cout << "cell1 neighbors sorted for cell " << cell1 << ":\n";
         for (std::vector<SimilarCell>::iterator it=candidates.begin();
-	     it != candidates.end(); it++) {
-		std::cout << (it->cell);
-	}
-	std::cout << "\n";
+         it != candidates.end(); it++) {
+        std::cout << (it->cell);
+    }
+    std::cout << "\n";
         */
 
-	// Fill output matrix
-	for(uint64_t neigh=0; neigh < (uint64_t)k; neigh++) {
-	    if(candidates[neigh].similarity >= threshold) {
-	        knn(cell1, neigh) = candidates[neigh].cell;
-	        similarity(cell1, neigh) = candidates[neigh].similarity;
-	    } else {
-		// n is above the max, so it is used as nans
-	        knn(cell1, neigh) = n;
-	        similarity(cell1, neigh) = 0;
-	    }
-	}
+    // Fill output matrix
+    for(uint64_t neigh=0; neigh < (uint64_t)k; neigh++) {
+        if(candidates[neigh].similarity >= threshold) {
+            knn(cell1, neigh) = candidates[neigh].cell;
+            similarity(cell1, neigh) = candidates[neigh].similarity;
+        } else {
+        // n is above the max, so it is used as nans
+            knn(cell1, neigh) = n;
+            similarity(cell1, neigh) = 0;
+        }
+    }
+    }
+
+}
+
+uint64_t sliceSignature(uint64_t *data, uint64_t firstBit, uint64_t nBits) {
+    if (nBits > 64) {
+        throw runtime_error("Slices must be at most 64 bit long");
+    } else if (nBits == 0) {
+        throw runtime_error("Slices must be at least 1 bit long");
+    }
+
+    // Find whether we are crossing word boundary
+    uint64_t firstWord = firstBit >> 6;
+    uint64_t lastWord = (firstBit + nBits) >> 6;
+
+    // Not crossing word boundary is easy, just shift and bitwise &
+    if (lastWord == firstWord) {
+        // e.g. if nBits = 3 and firstBit = 66, we go to the second word,
+        // then shift = 2, so other is b11100 = 28
+        // after the bitwise &, the first shift bits are all 0 anyway, we can
+        // trash them to be consistent
+        uint64_t shift = firstBit % 64;
+        uint64_t other = ((1ULL << nBits) - 1ULL) << shift;
+        return ((*(data + firstWord)) & other) >> shift;
+    } else {
+    // Else, we have to split the job in two
+        uint64_t shift = firstBit % 64;
+        uint64_t nBitsFirst = 64 - shift;
+        uint64_t other = ((1ULL << nBitsFirst) - 1ULL) << shift;
+        uint64_t out = ((*(data + firstWord)) & other) >> shift;
+
+        // The second word has no shift
+        uint64_t nBitsSecond = nBits - nBitsFirst;
+        uint64_t other = ((1ULL << nBitsSecond) - 1ULL) << 0;
+        out |= ((*(data + secondWord)) & other) << nBitsFirst;
+        return out;
     }
 
 }
@@ -159,31 +199,31 @@ Eigen::MatrixXd computeHashSlices(
         signatureMap.clear();
 
         // Iterate over cells
-	for (uint64_t cell=0; cell < n; cell++) {
+    for (uint64_t cell=0; cell < n; cell++) {
             BitSetPointer bp(
                 begin=signature.data() + cell * wordCount + gi * q,
-		wordCount=q);
-	    signatureMap[bp].push_back(cell);
+        wordCount=q);
+        signatureMap[bp].push_back(cell);
         }
 
-	// Now we have the first sliced signatures
-	// Let's add neighbor candidates
+    // Now we have the first sliced signatures
+    // Let's add neighbor candidates
         for (std::map<BitSetPointer, std::vector<uint64_t> >::iterator it=signatureMap.begin();
              it!=mymap.end();
              it++) {
              // Calculate all pairwise distances within group
-	     int ng = it->second.size();
-	     MatrixXdR similarityHashGroup(ng, ng);
-	     for (std::vector<int>::iterator vit = it->second.begin(), int cell1=0; vit != it->second.end(); vit++, cell1++) {
+         int ng = it->second.size();
+         MatrixXdR similarityHashGroup(ng, ng);
+         for (std::vector<int>::iterator vit = it->second.begin(), int cell1=0; vit != it->second.end(); vit++, cell1++) {
                  for (std::vector<int>::iterator vit2 = it->second.begin(), int cell2=0; vit2 != it->second.end(); vit2++, cell2++) {
                      similarityHashGroup(cell1, cell2) = computeCellSimilarity(
-				     BitSetPointer(begin=signature.data() + (*vit1) * wordCount, wordCount=wordCount),
-				     BitSetPointer(begin=signature.data() + (*vit2) * wordCount, wordCount=wordCount),
-				     )
-	          }
-	     }
+                     BitSetPointer(begin=signature.data() + (*vit1) * wordCount, wordCount=wordCount),
+                     BitSetPointer(begin=signature.data() + (*vit2) * wordCount, wordCount=wordCount),
+                     )
+              }
+         }
              
-	     // Sort rows and take top 20
+         // Sort rows and take top 20
     }
 
 
@@ -220,10 +260,10 @@ void knn_from_signature(
 
     // Slower version, go through n^2 pairs
     computeNeighborsViaAllPairs(
-	signature, knn, similarity,
-	n, k, wordCount,
-	similarityTable,
-	threshold);
+    signature, knn, similarity,
+    n, k, wordCount,
+    similarityTable,
+    threshold);
     
     // Faster version
     //// 1. Create g bit subgroups with q 64-bit words each
@@ -242,7 +282,7 @@ void knn_from_signature(
     //// 3.     For each cell, find k neighbors in the same hash group
     //// 4. Sort cell neighbours from all subgroups and take first k
     //// 5. Format for returning
-	
+    
 }
 
 PYBIND11_MODULE(_lshknn, m) {
