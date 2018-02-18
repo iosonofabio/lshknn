@@ -22,6 +22,7 @@ class Lshknn:
             k=20,
             threshold=0.2,
             m=100,
+            slice_length=0,
             ):
         '''Local sensitive hashing k-nearest neighbors.
 
@@ -32,6 +33,7 @@ vectors to analyze. Shape is (f, n) with f features and n samples.
             threshold (float): minimal correlation threshold to be considered \
 a neighbor.
             m (int): number of random hyperplanes to use.
+            slice_length (int): the number of bits in the hashing
 
         Returns:
             TODO TODO
@@ -42,6 +44,7 @@ a neighbor.
         self.threshold = threshold
         self.m = m
         self.n = data.shape[1]
+        self.slice_length = slice_length
 
     def _check_input(self):
         if len(self.data.shape) != 2:
@@ -54,6 +57,8 @@ a neighbor.
             raise ValueError('threshold should be between -1 and 1')
         if np.min(self.data.shape) < 2:
             raise ValueError('data should be at least 2x2 in shape')
+        if self.slice_length > self.m:
+            raise ValueError('slice_length cannot be longer than m')
 
     def _normalize_data(self):
         try:
@@ -93,7 +98,7 @@ a neighbor.
 
         self.signature = np.array([ints], np.uint64)
 
-    def _knnlsh(self, use_slices=False):
+    def _knnlsh(self):
         if not hasattr(self, 'planes'):
             raise AttributeError('Compute signature first!')
 
@@ -110,7 +115,7 @@ a neighbor.
                 self.m,
                 self.k,
                 self.threshold,
-                use_slices,
+                self.slice_length,
                 )
 
     def _format_output(self):
@@ -141,10 +146,10 @@ a neighbor.
 
         return self.knn, self.similarity, self.n_neighbors
 
-    def __call__(self, use_slices=False):
+    def __call__(self):
         self._check_input()
         self._normalize_data()
         self._generate_planes()
         self._compute_signature()
-        self._knnlsh(use_slices=use_slices)
+        self._knnlsh()
         return self._format_output()

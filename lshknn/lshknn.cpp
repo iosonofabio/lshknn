@@ -332,7 +332,7 @@ void knn_from_signature(
     const int m,
     const int k,
     const double threshold,
-    bool useSlices) {
+    const int sliceLength) {
 
     // signature is a vector containing 64 bit integers for all n cells, the number of 64bit for each cell is
     size_t wordCount = 1 + ((m - 1) / 64);
@@ -343,7 +343,7 @@ void knn_from_signature(
     computeSimilarityTable((size_t)m, similarityTable);
 
     // Slower version, go through n^2 pairs
-    if (!useSlices) {
+    if (sliceLength == 0) {
         computeNeighborsViaAllPairs(
         signature, knn, similarity, nNeighbors,
         n, k, wordCount,
@@ -354,8 +354,6 @@ void knn_from_signature(
     } else {
         // 1. Make non-overlapping q bit slices, total m / q
         //    Up to 2^q hashes per group
-        int sliceLength = 5;
-
         // 2. For each subgroup, hash cells
         // 3.     For each cell, find k neighbors in the same hash group
         // 4. Sort cell neighbours from all subgroups and take first k
