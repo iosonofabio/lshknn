@@ -15,7 +15,7 @@ c = lshknn.Lshknn(
         data=data,
         k=k,
         threshold=threshold,
-        m=256,
+        m=128,
         slice_length=0,
         )
 knn, similarity, n_neighbors = c()
@@ -32,7 +32,7 @@ c = lshknn.Lshknn(
         data=data,
         k=k,
         threshold=threshold,
-        m=256,
+        m=128,
         slice_length=8,
         )
 knn, similarity, n_neighbors = c()

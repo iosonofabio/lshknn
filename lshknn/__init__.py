@@ -79,14 +79,21 @@ a neighbor.
         self.planes = np.random.normal(
                 loc=0,
                 scale=1,
-                size=(self.data.shape[0], self.m),
+                size=(self.m, self.data.shape[0]),
                 )
 
     def _compute_signature(self):
         if not hasattr(self, 'planes'):
             raise AttributeError('Generate planes first!')
 
-        signature = np.dot(self.data.T, self.planes) > 0
+        print('Data shape {:}, planes {:}'.format(self.data.shape, self.planes.shape))
+
+        import time
+        t0 = time.time()
+        # FIXME: this is taking 99% of the time
+        signature = (np.dot(self.planes, self.data)).T > 0
+        t1 = time.time()
+        print('Time for the signature matrix calculation: {:} secs.'.format(t1 - t0))
 
         word_count = 1 + (self.m - 1) // 64
         base = 1 << np.arange(64, dtype=np.uint64)
@@ -103,9 +110,13 @@ a neighbor.
             raise AttributeError('Compute signature first!')
 
         # NOTE: I allocate the output array in Python for ownership purposes
+
         self.knn = np.zeros((self.n, self.k), dtype=np.uint64)
         self.similarity = np.zeros((self.n, self.k), dtype=np.float64)
         self.n_neighbors = np.zeros((self.n, 1), dtype=np.uint64)
+
+        import time
+        t0 = time.time()
         knn_from_signature(
                 self.signature,
                 self.knn,
@@ -117,6 +128,8 @@ a neighbor.
                 self.threshold,
                 self.slice_length,
                 )
+        t1 = time.time()
+        print('Time for the C++ code: {:} secs.'.format(t1 - t0))
 
     def _format_output(self):
         # Kill empty spots in the matrix
