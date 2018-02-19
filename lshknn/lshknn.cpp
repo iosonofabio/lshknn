@@ -268,46 +268,59 @@ void computeNeighborsViaSlices(
             
             // Naive algorithm, recalculate distances from each cell
             std::vector<uint64_t> cellsBucket = mit->second;
-            std::vector<SimilarCell> candidates;
             for(std::vector<uint64_t>::iterator cit=cellsBucket.begin();
                 cit != cellsBucket.end();
                 cit++) {
 
-                candidates.clear();
                 BitSetPointer bp1(signature.data() + (*cit) * wordCount, wordCount);
+                std::vector<SimilarCell>* neighborsCell = &neighbors[*cit];
                 
                 for(std::vector<uint64_t>::iterator cit2=cellsBucket.begin();
                     cit2 != cellsBucket.end();
                     cit2++) {
-                    if (cit2 != cit) {
-                        BitSetPointer bp2(signature.data() + (*cit2) * wordCount, wordCount);
-                        double sim = computeCellSimilarity(bp1, bp2, similarityTable);
-                        if (sim >= threshold)
-                            candidates.push_back({ sim, *cit2 });
+
+                    // Skip self
+                    if (cit2 == cit)
+                        continue;
+
+                    // Skip cell if it is already in the candidates list
+                    bool skip = false;
+                    for(std::vector<SimilarCell>::iterator candit=neighborsCell->begin();
+                        candit != neighborsCell->end();
+                        candit++) {
+                        if (candit->cell == (*cit2)) {
+                            skip = true;
+                            break;
+                        }
                     }
+                    if (skip)
+                        break;
+
+                    // Else, calculate similarity
+                    BitSetPointer bp2(signature.data() + (*cit2) * wordCount, wordCount);
+                    double sim = computeCellSimilarity(bp1, bp2, similarityTable);
+                    if (sim >= threshold)
+                        neighborsCell->push_back({ sim, *cit2 });
                 }
 
-                // Sort candidates and take top k neighbors
-                std::sort(candidates.begin(), candidates.end(), compareSimilarCells);
-                if (candidates.size() > (uint64_t)k)
-                    candidates.resize(k);
-                neighbors[*cit].insert(neighbors[*cit].end(), candidates.begin(), candidates.end());
+                // Sort candidates
+                std::sort(neighborsCell->begin(), neighborsCell->end(), compareSimilarCells);
+
+                // Take only top k candidates
+                if (neighborsCell->size() > (uint64_t)k)
+                    neighborsCell->resize(k);
             }
         }
     }
 
-    // Take top k candidates for each cell
+    // Prepare and write output
     uint64_t cellFocal = 0;
     for(std::vector< std::vector<SimilarCell> >::iterator nit=neighbors.begin();
         nit != neighbors.end();
         nit++) {
 
-        // FIXME: optimize to only sort k of them, the k largest
+        // candidates are already sorted and unique from the last bucket pass
         std::vector<SimilarCell> neighborsCell = *nit;
-        std::sort(neighborsCell.begin(), neighborsCell.end(), compareSimilarCells);
-        // Remove duplicates
-        std::vector<SimilarCell>::iterator itLast = std::unique(neighborsCell.begin(), neighborsCell.end());
-        neighborsCell.resize(std::distance(neighborsCell.begin(), itLast));
 
         // Fill holes
         uint64_t nNeighborsCell = neighborsCell.size() < (uint64_t)k ? neighborsCell.size() : k;

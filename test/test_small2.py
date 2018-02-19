@@ -2,12 +2,12 @@ import numpy as np
 import lshknn
 
 threshold = 0.2
-k = 5
+k = 4
 
 data = np.array(
         # 0  1  2   3     4     5     6   7
-        [[1, 0, 1, 0.19, 0.21, 0.23, 0.7, 0],
-         [0, 1, 0, 0.81, 0.79, 0.77, 0.3, 1],
+        [[1, 0, 1, 0.19, 0.25, 0.35, 0.7, 0],
+         [0, 1, 0, 0.81, 0.75, 0.65, 0.3, 1],
          [0, 0, 0, 0.00, 0.00, 0.00, 0.0, 0],
          [0, 0, 0, 0.00, 0.00, 0.00, 0.0, 0],
          [0, 0, 0, 0.00, 0.00, 0.00, 0.0, 0],
@@ -37,34 +37,25 @@ similarity_sol = np.ma.array(similarity_sol)
 knn_sol.mask = similarity_sol.mask
 
 print('Test not so small data without slicing')
-# Because the algorithm is random, we have to try a few times
-for i in range(50):
-    c = lshknn.Lshknn(
-            data=data,
-            k=k,
-            threshold=threshold,
-            m=80,
-            slice_length=0,
-            )
-    knn, similarity, n_neighbors = c()
-    if (knn == knn_sol).all() and (knn.mask == knn_sol.mask).all():
-        break
-else:
-    raise AssertionError
+c = lshknn.Lshknn(
+        data=data,
+        k=k,
+        threshold=threshold,
+        m=80,
+        slice_length=0,
+        )
+knn, similarity, n_neighbors = c()
+assert np.abs((similarity - similarity_sol).mean()) < 0.1
 print('Done')
 
 print('Test not so small data with slicing')
-for i in range(50):
-    c = lshknn.Lshknn(
-            data=data,
-            k=k,
-            threshold=threshold,
-            m=80,
-            slice_length=6,
-            )
-    knn, similarity, n_neighbors = c()
-    if (knn == knn_sol).all() and (knn.mask == knn_sol.mask).all():
-        break
-else:
-    raise AssertionError
+c = lshknn.Lshknn(
+        data=data,
+        k=k,
+        threshold=threshold,
+        m=80,
+        slice_length=6,
+        )
+knn, similarity, n_neighbors = c()
+assert np.abs((similarity - similarity_sol).mean()) < 0.1
 print('Done')
