@@ -60,7 +60,7 @@ for i in range(50):
             k=k,
             threshold=threshold,
             m=80,
-            slice_length=4,
+            slice_length=6,
             )
     knn, similarity, n_neighbors = c()
     if (knn == knn_sol).all() and (knn.mask == knn_sol.mask).all():
