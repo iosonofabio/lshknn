@@ -145,8 +145,12 @@ a neighbor.
             has_pandas = False
 
         if has_pandas and isinstance(self.data, pd.DataFrame):
+            index = self.samplenames
+            knn = np.ma.zeros_like(self.knn, dtype=index.dtype)
+            for icol, col in enumerate(knn.T):
+                knn[:, icol] = index[col]
             self.knn = pd.Dataframe(
-                    self.knn,
+                    knn,
                     index=self.samplenames,
                     columns=pd.Index(np.arange(self.k), name='neighbor'))
             self.similarity = pd.Dataframe(
