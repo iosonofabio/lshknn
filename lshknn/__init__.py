@@ -22,7 +22,7 @@ class Lshknn:
             k=20,
             threshold=0.2,
             m=100,
-            slice_length=0,
+            slice_length=None,
             ):
         '''Local sensitive hashing k-nearest neighbors.
 
@@ -33,10 +33,13 @@ vectors to analyze. Shape is (f, n) with f features and n samples.
             threshold (float): minimal correlation threshold to be considered \
 a neighbor.
             m (int): number of random hyperplanes to use.
-            slice_length (int): the number of bits in the hashing
+            slice_length (int or None): The slice length to use if \
+approximating signatures in hash buckets.
 
         Returns:
-            TODO TODO
+            (knn, similarity, n_neighbors): triple with the nearest \
+neighbors, the matrix of similarities, and the number of neighbors for each \
+cell.
         '''
 
         self.data = data
@@ -44,56 +47,56 @@ a neighbor.
         self.threshold = threshold
         self.m = m
         self.n = data.shape[1]
-        self.slice_length = slice_length
 
     def _check_input(self):
+        if not isinstance(self.data, np.ndarray):
+            raise ValueError('data should be a numpy 2D matrix')
         if len(self.data.shape) != 2:
-            raise ValueError('data should be a matrix, dataframe')
+            raise ValueError('data should be a 2D matrix')
+        if np.min(self.data.shape) < 2:
+            raise ValueError('data should be at least 2x2 in shape')
         if self.m < 1:
             raise ValueError('m should be 1 or more')
         if self.k < 1:
             raise ValueError('k should be 1 or more')
         if (self.threshold < -1) or (self.threshold > 1):
             raise ValueError('threshold should be between -1 and 1')
-        if np.min(self.data.shape) < 2:
-            raise ValueError('data should be at least 2x2 in shape')
-        if self.slice_length > self.m:
-            raise ValueError('slice_length cannot be longer than m')
+        if (self.slice_length is not None) and (self.slice_length < 1):
+            raise ValueError('slice_length should be None or between 1 and 64')
 
-    def _normalize_data(self):
-        try:
-            import pandas as pd
-            has_pandas = True
-        except ImportError:
-            has_pandas = False
-
-        if has_pandas and isinstance(self.data, pd.DataFrame):
-            self.samplenames = self.data.columns
-            self.data = self.data.data.astype(np.float64)
+    def _normalize_input(self):
+        if self.slice_length is None:
+            self.slice_length = 0
 
         # Substract average across genes for each cell
         # FIXME: preserve sparsity?!
         self.data = self.data - self.data.mean(axis=0)
 
     def _generate_planes(self):
-        self.planes = np.random.normal(
-                loc=0,
-                scale=1,
-                size=(self.m, self.data.shape[0]),
-                )
+        # Optimization flags
+        if self.data.flags['C_CONTIGUOUS']:
+            self.planes = np.random.normal(
+                    loc=0,
+                    scale=1,
+                    size=(self.m, self.data.shape[0]),
+                    )
+        else:
+            self.planes = np.random.normal(
+                    loc=0,
+                    scale=1,
+                    size=(self.data.shape[0], self.m),
+                    )
 
     def _compute_signature(self):
         if not hasattr(self, 'planes'):
             raise AttributeError('Generate planes first!')
 
-        print('Data shape {:}, planes {:}'.format(self.data.shape, self.planes.shape))
-
-        import time
-        t0 = time.time()
-        # FIXME: this is taking 99% of the time
-        signature = (np.dot(self.planes, self.data)).T > 0
-        t1 = time.time()
-        print('Time for the signature matrix calculation: {:} secs.'.format(t1 - t0))
+        # NOTE: 90% of the time is spent here
+        if self.data.flags['C_CONTIGUOUS']:
+            signature = np.dot(self.planes, self.data).T > 0
+            signature = np.ascontiguousarray(signature)
+        else:
+            signature = np.dot(self.data.T, self.planes) > 0
 
         word_count = 1 + (self.m - 1) // 64
         base = 1 << np.arange(64, dtype=np.uint64)
@@ -110,13 +113,9 @@ a neighbor.
             raise AttributeError('Compute signature first!')
 
         # NOTE: I allocate the output array in Python for ownership purposes
-
         self.knn = np.zeros((self.n, self.k), dtype=np.uint64)
         self.similarity = np.zeros((self.n, self.k), dtype=np.float64)
         self.n_neighbors = np.zeros((self.n, 1), dtype=np.uint64)
-
-        import time
-        t0 = time.time()
         knn_from_signature(
                 self.signature,
                 self.knn,
@@ -128,8 +127,6 @@ a neighbor.
                 self.threshold,
                 self.slice_length,
                 )
-        t1 = time.time()
-        print('Time for the C++ code: {:} secs.'.format(t1 - t0))
 
     def _format_output(self):
         # Kill empty spots in the matrix
@@ -137,35 +134,11 @@ a neighbor.
         ind = self.knn >= self.n
         self.knn = np.ma.array(self.knn, mask=ind, copy=False)
         self.similarity = np.ma.array(self.similarity, mask=ind, copy=False)
-
-        try:
-            import pandas as pd
-            has_pandas = True
-        except ImportError:
-            has_pandas = False
-
-        if has_pandas and isinstance(self.data, pd.DataFrame):
-            index = self.samplenames
-            knn = np.ma.zeros_like(self.knn, dtype=index.dtype)
-            for icol, col in enumerate(knn.T):
-                knn[:, icol] = index[col]
-            self.knn = pd.Dataframe(
-                    knn,
-                    index=self.samplenames,
-                    columns=pd.Index(np.arange(self.k), name='neighbor'))
-            self.similarity = pd.Dataframe(
-                    self.similarity,
-                    index=self.samplenames,
-                    columns=pd.Index(np.arange(self.k), name='neighbor'))
-            self.n_neighbors = pd.Series(
-                    self.n_neighbors,
-                    index=self.samplenames)
-
         return self.knn, self.similarity, self.n_neighbors
 
     def __call__(self):
         self._check_input()
-        self._normalize_data()
+        self._normalize_input()
         self._generate_planes()
         self._compute_signature()
         self._knnlsh()

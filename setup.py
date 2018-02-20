@@ -26,7 +26,6 @@ kwargs = dict(
         'numpy',
     ],
     extras_require={
-        'dataframes': ['pandas']
     },
   )
 

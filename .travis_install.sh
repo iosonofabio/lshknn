@@ -8,7 +8,7 @@ fi
 pip install -r requirements.txt
 
 # old setuptools also has a bug for extras, but it still compiles
-pip install -v '.[dataframes]'
+pip install -v '.'
 if [ $? != 0 ]; then
     exit 1
 fi
