@@ -64,7 +64,7 @@ cell.
             raise ValueError('threshold should be between -1 and 1')
         if (self.slice_length is not None) and (self.slice_length < 1):
             raise ValueError('slice_length should be None or between 1 and 64')
-        if self.slice_length > self.m:
+        if (self.slice_length is not None) and (self.slice_length > self.m):
             raise ValueError('slice_length cannot be longer than m')
 
     def _normalize_input(self):
@@ -78,17 +78,21 @@ cell.
     def _generate_planes(self):
         # Optimization flags
         if self.data.flags['C_CONTIGUOUS']:
-            self.planes = np.random.normal(
+            planes = np.random.normal(
                     loc=0,
                     scale=1,
                     size=(self.m, self.data.shape[0]),
-                    )
+                    ).T
+            planes /= planes.sum(axis=0)
+            planes = planes.T
         else:
-            self.planes = np.random.normal(
+            planes = np.random.normal(
                     loc=0,
                     scale=1,
                     size=(self.data.shape[0], self.m),
                     )
+            planes /= planes.sum(axis=0)
+        self.planes = planes
 
     def _compute_signature(self):
         if not hasattr(self, 'planes'):
