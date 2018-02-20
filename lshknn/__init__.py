@@ -63,6 +63,8 @@ cell.
             raise ValueError('threshold should be between -1 and 1')
         if (self.slice_length is not None) and (self.slice_length < 1):
             raise ValueError('slice_length should be None or between 1 and 64')
+        if self.slice_length > self.m:
+            raise ValueError('slice_length cannot be longer than m')
 
     def _normalize_input(self):
         if self.slice_length is None:
