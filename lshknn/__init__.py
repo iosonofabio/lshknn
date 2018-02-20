@@ -47,6 +47,7 @@ cell.
         self.threshold = threshold
         self.m = m
         self.n = data.shape[1]
+        self.slice_length = slice_length
 
     def _check_input(self):
         if not isinstance(self.data, np.ndarray):
