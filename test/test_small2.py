@@ -42,7 +42,7 @@ c = lshknn.Lshknn(
         k=k,
         threshold=threshold,
         m=80,
-        slice_length=0,
+        slice_length=None,
         )
 knn, similarity, n_neighbors = c()
 assert np.abs((similarity - similarity_sol).mean()) < 0.1
