@@ -16,7 +16,7 @@ c = lshknn.Lshknn(
         k=k,
         threshold=threshold,
         m=128,
-        slice_length=0,
+        slice_length=None,
         )
 knn, similarity, n_neighbors = c()
 t1 = time.time()

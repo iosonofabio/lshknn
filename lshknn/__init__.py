@@ -120,7 +120,7 @@ cell.
             raise AttributeError('Compute signature first!')
 
         # NOTE: I allocate the output array in Python for ownership purposes
-        self.knn = np.zeros((self.n, self.k), dtype=np.uint64)
+        self.knn = self.n * np.ones((self.n, self.k), dtype=np.uint64)
         self.similarity = np.zeros((self.n, self.k), dtype=np.float64)
         self.n_neighbors = np.zeros((self.n, 1), dtype=np.uint64)
         knn_from_signature(
