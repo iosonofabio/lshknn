@@ -20,7 +20,10 @@ echo "Deploy onto: $PYPI"
 pip install twine
 python setup.py sdist
 distfile=$(ls dist/*.tar.gz)
-twine upload --username $TWINE_USERNAME --password $TWINE_PASSWORD --repository testpypi --repository-url $PYPI --skip-existing $distfile
+echo "Twine username: $TWINE_USERNAME"
+echo "Twine repository url: $PYPI"
+echo "Twine distfile: $distfile"
+twine upload --username $TWINE_USERNAME --password $TWINE_PASSWORD --repository $PYPI --repository-url $PYPI --skip-existing $distfile
 
 echo "Test install from pip"
 sudo pip uninstall lshknn
