@@ -24,7 +24,3 @@ echo "Twine username: $TWINE_USERNAME"
 echo "Twine repository url: $PYPI"
 echo "Twine distfile: $distfile"
 twine upload --username "${TWINE_USERNAME}" --password "${TWINE_PASSWORD}" --repository-url "${PYPI}" --skip-existing "${distfile}"
-
-echo "Test install from pip"
-sudo pip uninstall lshknn
-sudo pip install --index-url $PYPY_IDX lshknn
