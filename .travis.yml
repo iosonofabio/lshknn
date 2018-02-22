@@ -1,41 +1,38 @@
 notifications:
   email: false
-
 language: python
-
 matrix:
   include:
-    - python: 3.6
-      os: linux
-      dist: trusty
-      sudo: required
-    - python: 3.5
-      os: linux
-      dist: trusty
-      sudo: required
-    - python: 3.4
-      os: linux
-      dist: trusty
-      sudo: required
-    - python: 2.7
-      os: linux
-      dist: trusty
-      sudo: required
-      #    - env: PYTHON_VERSION='2.7'
-      #      language: generic
-      #      os: osx
-      #    - env: PYTHON_VERSION='3.6'
-      #      language: generic
-      #      os: osx
-
+  - python: 3.6
+    os: linux
+    dist: trusty
+    sudo: required
+  - python: 3.5
+    os: linux
+    dist: trusty
+    sudo: required
+  - python: 3.4
+    os: linux
+    dist: trusty
+    sudo: required
+  - python: 2.7
+    os: linux
+    dist: trusty
+    sudo: required
 before_install:
-  - ./.travis_before_install.sh
-
+- "./.travis_before_install.sh"
 install:
-  - ./.travis_install.sh
- 
+- "./.travis_install.sh"
 script:
-  - ./.travis_test.sh
+- "./.travis_test.sh"
 
-after_success:
-  - ./.travis_deploy.sh
+
+jobs:
+  include:
+    - stage: deploy
+      python: 3.6
+      os: linux
+      sudo: required
+      if: tag =~ ^prerelease_
+      env: PYPI=https://testpypi.python.org/pypi
+      script: "./.travis_deploy.sh"

@@ -121,10 +121,40 @@ setup(name='lshknn',
       maintainer='Fabio Zanini',
       maintainer_email='fabio.zanini@stanford.edu',
       url='https://github.com/iosonofabio/lshknn',
-      description="k nearest neighbor (KNN) graphs via Pearson correlation distance and local sensitive hashing (LSH).",      long_description="""
+      description="k nearest neighbor (KNN) graphs via Pearson correlation distance and local sensitive hashing (LSH).",
+      long_description="""
 k nearest neighbor (KNN) graphs via Pearson correlation distance and local sensitive hashing (LSH).
 
-Development: https://github.com/iosonofabio/lshknn
+- **Development**: https://github.com/iosonofabio/lshknn
+- **Authors**: Fabio Zanini and Paolo Carnevali
+- **License**: MIT
+- **Copyright**: Fabio Zanini and Chan Zuckerberg Initiative
+
+.. code-block:: python
+
+    import numpy as np
+    import lshknn
+
+    # Make mock data
+    # 2 features (rows), 4 samples (columns)
+    data = np.array(
+            [[1, 0, 1, 0],
+             [0, 1, 0, 1]],
+            dtype=np.float64)
+
+    # Instantiate class
+    c = lshknn.Lshknn(
+            data=data,
+            k=1,
+            threshold=0.2,
+            m=10,
+            slice_length=4)
+
+    # Call subroutine
+    knn, similarity, n_neighbors = c()
+
+    # Check result
+    assert (knn == [[2], [3], [0], [1]]).all()
 
       """,
       license='MIT',
