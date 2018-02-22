@@ -1,53 +1,57 @@
 notifications:
   email: false
 language: python
-#matrix:
-#
-#before_install:
-#- "./.travis_before_install.sh"
-#install:
-#- "./.travis_install.sh"
-#script:
-#- "./.travis_test.sh"
+
+stages:
+  - test
+  - deploy
 
 jobs:
   include:
-  - python: 3.6
-    os: linux
-    dist: trusty
-    sudo: required
-    script:
-     - ./.travis_before_install.sh
-     - ./.travis_install.sh
-     - ./.travis_test.sh
-  - python: 3.5
-    os: linux
-    dist: trusty
-    sudo: required
-    script:
-     - ./.travis_before_install.sh
-     - ./.travis_install.sh
-     - ./.travis_test.sh
-  - python: 3.4
-    os: linux
-    dist: trusty
-    sudo: required
-    script:
-     - ./.travis_before_install.sh
-     - ./.travis_install.sh
-     - ./.travis_test.sh
-  - python: 2.7
-    os: linux
-    dist: trusty
-    sudo: required
-    script:
-     - ./.travis_before_install.sh
-     - ./.travis_install.sh
-     - ./.travis_test.sh
-  - stage: deploy
-    python: 3.6
-    os: linux
-    sudo: required
-    if: tag =~ ^prerelease_
-    env: PYPI=https://testpypi.python.org/pypi
-    script: "./.travis_deploy.sh"
+   - stage: test
+     python: 3.6
+     os: linux
+     dist: trusty
+     sudo: required
+     script:
+      - ./.travis_before_install.sh
+      - ./.travis_install.sh
+      - ./.travis_test.sh
+   
+   - stage: test
+     python: 3.5
+     os: linux
+     dist: trusty
+     sudo: required
+     script:
+      - ./.travis_before_install.sh
+      - ./.travis_install.sh
+      - ./.travis_test.sh
+
+   - stage: test
+     python: 3.4
+     os: linux
+     dist: trusty
+     sudo: required
+     script:
+      - ./.travis_before_install.sh
+      - ./.travis_install.sh
+      - ./.travis_test.sh
+
+   - stage: test
+     python: 2.7
+     os: linux
+     dist: trusty
+     sudo: required
+     script:
+      - ./.travis_before_install.sh
+      - ./.travis_install.sh
+      - ./.travis_test.sh
+
+   - stage: deploy
+     python: 3.6
+     os: linux
+     sudo: required
+     if: tag =~ ^prerelease_
+     env: PYPI=https://testpypi.python.org/pypi
+     script: "./.travis_deploy.sh"
