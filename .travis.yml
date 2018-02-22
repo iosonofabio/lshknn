@@ -71,11 +71,13 @@ jobs:
      os: linux
      sudo: required
      if: tag =~ ^prerelease_
-     script: ./.travis_deploy.sh testpypi
+     env: PYPI=testpypi
+     script: ./.travis_deploy.sh $PYPI
 
    - stage: deploy
      python: 3.6
      os: linux
      sudo: required
-     if: tag =~ ^prerelease_
-     script: ./.travis_deploy.sh pypi
+     if: tag =~ ^release_
+     env: PYPI=pypi
+     script: ./.travis_deploy.sh $PYPI
