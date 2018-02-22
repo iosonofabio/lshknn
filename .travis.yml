@@ -16,31 +16,34 @@ jobs:
     os: linux
     dist: trusty
     sudo: required
-    script: ./.travis_before_install.sh
-    script: ./.travis_install.sh
-    script: ./.travis_test.sh"
-    script: 
+    script:
+     - ./.travis_before_install.sh
+     - ./.travis_install.sh
+     - ./.travis_test.sh
   - python: 3.5
     os: linux
     dist: trusty
     sudo: required
-    script: ./.travis_before_install.sh
-    script: ./.travis_install.sh
-    script: ./.travis_test.sh"
+    script:
+     - ./.travis_before_install.sh
+     - ./.travis_install.sh
+     - ./.travis_test.sh
   - python: 3.4
     os: linux
     dist: trusty
     sudo: required
-    script: ./.travis_before_install.sh
-    script: ./.travis_install.sh
-    script: ./.travis_test.sh"
+    script:
+     - ./.travis_before_install.sh
+     - ./.travis_install.sh
+     - ./.travis_test.sh
   - python: 2.7
     os: linux
     dist: trusty
     sudo: required
-    script: ./.travis_before_install.sh
-    script: ./.travis_install.sh
-    script: ./.travis_test.sh"
+    script:
+     - ./.travis_before_install.sh
+     - ./.travis_install.sh
+     - ./.travis_test.sh
   - stage: deploy
     python: 3.6
     os: linux
