@@ -3,8 +3,9 @@ notifications:
 language: python
 
 stages:
-  - test
-  - deploy
+ - name: test
+   if: tag IS blank
+ - deploy
 
 jobs:
   include:
