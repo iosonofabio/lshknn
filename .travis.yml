@@ -71,5 +71,7 @@ jobs:
      os: linux
      sudo: required
      if: tag =~ ^prerelease_
-     env: PYPI=https://testpypi.python.org/pypi
+     env:
+      - PYPI=https://testpypi.python.org/pypi
+      - PYPY_IDX=https://test.pypi.org/simple/
      script: "./.travis_deploy.sh"
