@@ -1,0 +1,5 @@
+include VERSION
+include setup.py
+include README.md
+include lshknn/__init__.py
+include lshknn/lshknn.cpp
