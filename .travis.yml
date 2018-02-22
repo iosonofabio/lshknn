@@ -48,6 +48,24 @@ jobs:
       - ./.travis_install.sh
       - ./.travis_test.sh
 
+   - stage: test
+     language: generic
+     os: osx
+     env: PYTHON_VERSION=3.6
+     script:
+      - ./.travis_before_install.sh
+      - ./.travis_install.sh
+      - ./.travis_test.sh
+
+   - stage: test
+     language: generic
+     os: osx
+     env: PYTHON_VERSION=2.7
+     script:
+      - ./.travis_before_install.sh
+      - ./.travis_install.sh
+      - ./.travis_test.sh
+
    - stage: deploy
      python: 3.6
      os: linux
