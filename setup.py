@@ -23,7 +23,9 @@ kwargs = dict(
         'pkgconfig',
     ],
     install_requires=[
+        'pybind11>=2.2',
         'numpy',
+        'pkgconfig',
     ],
     extras_require={
     },
@@ -129,6 +131,9 @@ k nearest neighbor (KNN) graphs via Pearson correlation distance and local sensi
 - **Authors**: Fabio Zanini and Paolo Carnevali
 - **License**: MIT
 - **Copyright**: Fabio Zanini and Chan Zuckerberg Initiative
+- **Requirements**: ``pybind11>=2.2``, ``numpy``, ``pkgconfig`` (see ``requirements.txt``)
+
+
 
 .. code-block:: python
 
