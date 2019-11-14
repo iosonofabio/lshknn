@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/iosonofabio/lshknn.svg?branch=master)](https://travis-ci.org/iosonofabio/lshknn)
 [![PyPI version](https://badge.fury.io/py/lshknn.svg)](https://badge.fury.io/py/lshknn)
+[![DOI](https://zenodo.org/badge/121540386.svg)](https://zenodo.org/badge/latestdoi/121540386)
 
 # LSHKNN
 CPython module for fast calculation of k nearest neighbor (KNN) graphs in high-dimensional vector spaces using Pearson correlation distance and local sensitive hashing (LSH).
